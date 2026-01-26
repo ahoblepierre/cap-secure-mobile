@@ -1,3 +1,4 @@
+import 'package:cap_secure_mobile/config/app_style.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
@@ -102,7 +103,8 @@ class _TimetablePageState extends State<TimetablePage> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
+      padding: EdgeInsets.all(kpadding),
       child: BlocBuilder<ShiftBloc, ShiftState>(
         builder: (context, state) {
           if (state is ShiftLoading) {

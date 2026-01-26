@@ -25,6 +25,13 @@ class _HomePageState extends State<HomePage> {
     const ProfilePage(),
   ];
 
+  final List<String> _pageTitles = [
+    "Emploi du temps",
+    "Pointage",
+    "Notifications",
+    "Profil",
+  ];
+
   void _onTabChange(int index) {
     setState(() {
       _selectedIndex = index;
@@ -37,12 +44,12 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: CustomAppBar(
-        title: "Accueil",
+        title: _pageTitles[_selectedIndex],
         centerTitle: false,
         elevation: 4.0,
       ),
       body: SafeArea(
-        minimum: EdgeInsets.all(kpadding),
+        // minimum: EdgeInsets.all(kpadding),
         child: _pages[_selectedIndex],
       ),
       bottomNavigationBar: CustomBottomNavBar(
