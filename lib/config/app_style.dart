@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 const double kBorder = 12.0;
 
+const double kpadding = 12.0;
+
 const double kheigth = 12.0;
 
 const Color kBleue = Color(0xff152850);
@@ -19,7 +21,13 @@ Color kGrey = Colors.grey.shade500;
 const textButtonThemeData = TextButtonThemeData(style: ButtonStyle());
 
 // theme text
-final TextTheme textTheme = GoogleFonts.robotoTextTheme();
+final TextTheme textTheme = GoogleFonts.dmSansTextTheme(
+  const TextTheme(
+    bodyLarge: TextStyle(fontSize: 16.0, fontWeight: FontWeight.w500),
+    bodyMedium: TextStyle(fontSize: 14.0, fontWeight: FontWeight.w400),
+    bodySmall: TextStyle(fontSize: 12.0, fontWeight: FontWeight.w300),
+  ),
+);
 
 const btnLabelStyle = TextStyle(
   fontSize: 20,

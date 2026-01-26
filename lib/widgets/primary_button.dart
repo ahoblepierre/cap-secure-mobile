@@ -2,9 +2,15 @@ import 'package:cap_secure_mobile/config/app_style.dart';
 import 'package:flutter/material.dart';
 
 class PrimaryButton extends StatelessWidget {
-  const PrimaryButton({super.key, required this.labelText, this.onPress});
+  const PrimaryButton({
+    super.key,
+    required this.labelText,
+    this.backgroundColor = kBleue,
+    this.onPress,
+  });
 
   final String labelText;
+  final Color? backgroundColor;
   final void Function()? onPress;
 
   @override
@@ -14,7 +20,7 @@ class PrimaryButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPress,
         style: ElevatedButton.styleFrom(
-          backgroundColor: kBleue,
+          backgroundColor: backgroundColor,
           padding: EdgeInsets.all(20),
           shape: ContinuousRectangleBorder(),
           textStyle: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
