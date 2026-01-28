@@ -3,6 +3,13 @@ allprojects {
         google()
         mavenCentral()
     }
+    
+    // Suppress Java 8 deprecation warnings
+    gradle.projectsEvaluated {
+        tasks.withType<JavaCompile>().configureEach {
+            options.compilerArgs.addAll(arrayOf("-Xlint:-options"))
+        }
+    }
 }
 
 val newBuildDir: Directory =

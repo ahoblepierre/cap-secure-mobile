@@ -1,3 +1,4 @@
+import 'package:cap_secure_mobile/models/location_model.dart';
 import 'package:equatable/equatable.dart';
 
 abstract class ScannerEvent extends Equatable {
@@ -23,3 +24,14 @@ class CodeScanned extends ScannerEvent {
 }
 
 class ResetScanner extends ScannerEvent {}
+
+// Nouvel event pour soumettre le pointage avec localisation
+class SubmitAttendance extends ScannerEvent {
+  final String scannedCode;
+  final LocationModel location;
+
+  const SubmitAttendance({required this.scannedCode, required this.location});
+
+  @override
+  List<Object> get props => [scannedCode, location];
+}

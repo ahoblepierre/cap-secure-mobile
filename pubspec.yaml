@@ -46,6 +46,7 @@ dependencies:
   syncfusion_flutter_calendar: ^32.1.24
   intl: ^0.20.2
   qr_code_scanner_plus: ^2.0.14
+  geolocator: ^14.0.2
 
 dev_dependencies:
   flutter_test:

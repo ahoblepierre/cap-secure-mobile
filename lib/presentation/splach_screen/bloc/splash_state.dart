@@ -10,3 +10,5 @@ sealed class SplashState extends Equatable {
 final class SplashInitial extends SplashState {}
 
 final class SplashNavigateToLogin extends SplashState {}
+
+final class SplashNavigateToHome extends SplashState {}
