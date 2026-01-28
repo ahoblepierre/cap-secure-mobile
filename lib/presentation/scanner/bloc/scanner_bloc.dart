@@ -1,4 +1,7 @@
+import 'dart:developer';
+
 import 'package:bloc/bloc.dart';
+import 'package:cap_secure_mobile/repository/scanner_repository.dart';
 import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 import 'scanner_event.dart';
 import 'scanner_state.dart';
@@ -6,13 +9,15 @@ import 'scanner_state.dart';
 class ScannerBloc extends Bloc<ScannerEvent, ScannerState> {
   QRViewController? _controller;
   bool _isFlashOn = false;
+  final ScannerRepository _scannerRepository = ScannerRepository();
 
-  ScannerBloc() : super(ScannerInitial()) {
+  ScannerBloc() : super(const ScannerInitial()) {
     on<StartScan>(_onStartScan);
     on<StopScan>(_onStopScan);
     on<ToggleFlash>(_onToggleFlash);
     on<CodeScanned>(_onCodeScanned);
     on<ResetScanner>(_onResetScanner);
+    on<SubmitAttendance>(_onSubmitAttendance);
   }
 
   void setController(QRViewController controller) {
@@ -34,7 +39,7 @@ class ScannerBloc extends Bloc<ScannerEvent, ScannerState> {
 
   void _onStopScan(StopScan event, Emitter<ScannerState> emit) {
     _controller?.pauseCamera();
-    emit(ScannerInitial());
+    emit(const ScannerInitial());
   }
 
   void _onToggleFlash(ToggleFlash event, Emitter<ScannerState> emit) async {
@@ -55,6 +60,38 @@ class ScannerBloc extends Bloc<ScannerEvent, ScannerState> {
   void _onResetScanner(ResetScanner event, Emitter<ScannerState> emit) {
     _controller?.resumeCamera();
     emit(ScannerScanning(_isFlashOn));
+  }
+
+  Future<void> _onSubmitAttendance(
+    SubmitAttendance event,
+    Emitter<ScannerState> emit,
+  ) async {
+    emit(const AttendanceSubmitting());
+
+    try {
+      log('📍 Envoi du pointage: ${event.scannedCode}');
+      log(
+        '📍 Localisation: Lat ${event.location.latitude}, Long ${event.location.longitude}',
+      );
+
+      final response = await _scannerRepository.submitAttendance(
+        scannedCode: event.scannedCode,
+        location: event.location,
+      );
+
+      log('✅ Pointage envoyé avec succès: $response');
+
+      emit(
+        AttendanceSubmitted(
+          message: response['message'] ?? 'Pointage enregistré avec succès',
+          data: response['data'],
+        ),
+      );
+    } catch (e) {
+      log('❌ Erreur lors du pointage: $e');
+
+      emit(AttendanceError(e.toString()));
+    }
   }
 
   @override

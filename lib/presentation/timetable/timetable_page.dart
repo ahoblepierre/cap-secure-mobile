@@ -1,4 +1,10 @@
+import 'dart:developer';
+
 import 'package:cap_secure_mobile/config/app_style.dart';
+import 'package:cap_secure_mobile/repository/shift_repository.dart';
+import 'package:cap_secure_mobile/widgets/empty_shift_state.dart';
+import 'package:cap_secure_mobile/widgets/loading_dialog.dart';
+import 'package:cap_secure_mobile/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
@@ -18,11 +24,24 @@ class TimetablePage extends StatefulWidget {
 
 class _TimetablePageState extends State<TimetablePage> {
   late ShiftDataSource _dataSource;
+  late ShiftBloc _shiftBloc;
+  bool _isLoadingDialogShown = false;
 
   @override
   void initState() {
     super.initState();
-    context.read<ShiftBloc>().add(LoadShifts());
+    // Créer le bloc UNE SEULE FOIS
+    _shiftBloc = ShiftBloc(shiftRepository: ShiftRepository());
+    // Déclencher le chargement
+    _shiftBloc.add(LoadShifts());
+    log('ShiftBloc created and LoadShifts triggered');
+  }
+
+  @override
+  void dispose() {
+    // Fermer le bloc pour libérer les ressources
+    _shiftBloc.close();
+    super.dispose();
   }
 
   void _onCalendarTapped(CalendarTapDetails details) {
@@ -91,9 +110,9 @@ class _TimetablePageState extends State<TimetablePage> {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
+            PrimaryButton(
+              onPress: () => Navigator.of(context).pop(),
+              labelText: 'Fermer',
             ),
           ],
         );
@@ -103,51 +122,102 @@ class _TimetablePageState extends State<TimetablePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(kpadding),
-      child: BlocBuilder<ShiftBloc, ShiftState>(
-        builder: (context, state) {
-          if (state is ShiftLoading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is ShiftLoaded) {
-            _dataSource = ShiftDataSource(state.shifts);
-            return SfCalendar(
-              view: CalendarView.month,
-              dataSource: _dataSource,
-              onTap: _onCalendarTapped,
-              monthViewSettings: const MonthViewSettings(
-                appointmentDisplayMode: MonthAppointmentDisplayMode.appointment,
-                showAgenda: true,
-              ),
-              appointmentBuilder: (context, calendarAppointmentDetails) {
-                final Appointment appointment =
-                    calendarAppointmentDetails.appointments.first;
-                return Container(
-                  width: calendarAppointmentDetails.bounds.width,
-                  height: calendarAppointmentDetails.bounds.height,
-                  decoration: BoxDecoration(
-                    color: appointment.color,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Center(
-                    child: Text(
-                      appointment.subject,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+    return BlocProvider.value(
+      value: _shiftBloc,
+      child: Container(
+        padding: EdgeInsets.all(kpadding),
+        child: BlocListener<ShiftBloc, ShiftState>(
+          listener: (context, state) {
+            if (state is ShiftLoading) {
+              // Afficher le dialog de chargement
+              if (!_isLoadingDialogShown) {
+                LoadingDialog.show(
+                  context,
+                  message: 'Chargement des shifts...',
                 );
-              },
-            );
-          } else if (state is ShiftError) {
-            return Center(child: Text('Erreur: ${state.message}'));
-          }
-          return const Center(child: Text('Aucun shift trouvé'));
-        },
+                _isLoadingDialogShown = true;
+              }
+            } else {
+              // Fermer le dialog de chargement
+              if (_isLoadingDialogShown) {
+                LoadingDialog.hide(context);
+                _isLoadingDialogShown = false;
+              }
+            }
+
+            // Gestion des erreurs
+            if (state is ShiftError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Erreur: ${state.message}'),
+                  backgroundColor: Colors.red,
+                  duration: const Duration(seconds: 4),
+                ),
+              );
+            }
+          },
+          child: BlocBuilder<ShiftBloc, ShiftState>(
+            builder: (context, state) {
+              if (state is ShiftInitial || state is ShiftLoading) {
+                return const SizedBox.expand();
+              } else if (state is ShiftLoaded) {
+                _dataSource = ShiftDataSource(state.shifts);
+                return SfCalendar(
+                  view: CalendarView.month,
+                  dataSource: _dataSource,
+                  onTap: _onCalendarTapped,
+                  monthViewSettings: const MonthViewSettings(
+                    appointmentDisplayMode:
+                        MonthAppointmentDisplayMode.appointment,
+                    showAgenda: true,
+                  ),
+                  appointmentBuilder: (context, calendarAppointmentDetails) {
+                    final Appointment appointment =
+                        calendarAppointmentDetails.appointments.first;
+                    return Container(
+                      width: calendarAppointmentDetails.bounds.width,
+                      height: calendarAppointmentDetails.bounds.height,
+                      decoration: BoxDecoration(
+                        color: appointment.color,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Center(
+                        child: Text(
+                          appointment.subject,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              } else if (state is ShiftEmpty) {
+                return const EmptyShiftState();
+              } else if (state is ShiftError) {
+                return Center(child: Text('Erreur: ${state.message}'));
+              }
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 48),
+                    Text(
+                      'Aucun shift trouvé',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }

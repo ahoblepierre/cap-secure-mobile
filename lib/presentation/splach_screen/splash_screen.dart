@@ -25,9 +25,11 @@ class _SplashScreenState extends State<SplashScreen> {
     return BlocListener<SplashBloc, SplashState>(
       listenWhen: (previous, current) => previous != current,
       listener: (context, state) {
+        log('Splash State: $state');
         if (state is SplashNavigateToLogin) {
-          log('Splash State: $state');
           context.go('/login');
+        } else if (state is SplashNavigateToHome) {
+          context.go('/home');
         }
       },
       child: const Scaffold(
