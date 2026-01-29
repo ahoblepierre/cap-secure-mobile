@@ -5,6 +5,7 @@ import 'package:cap_secure_mobile/presentation/profil/profile_page.dart';
 import 'package:cap_secure_mobile/presentation/scanner/scanner_page.dart';
 import 'package:cap_secure_mobile/presentation/timetable/timetable_page.dart';
 import 'package:cap_secure_mobile/routes/routes.dart';
+import 'package:cap_secure_mobile/services/notification_service.dart';
 import 'package:cap_secure_mobile/widgets/custom_app_bar.dart';
 import 'package:cap_secure_mobile/widgets/custom_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
@@ -12,14 +13,16 @@ import 'package:get_storage/get_storage.dart';
 import 'package:go_router/go_router.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, this.index = 0});
+
+  final int? index;
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
 
   final List<Widget> _pages = [
     const TimetablePage(),
@@ -89,8 +92,20 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.index ?? 0;
+    _getToken();
+  }
+
+  Future<void> _getToken() async {
+    await NotificationService.instance.getToken();
+  }
+
+  @override
   Widget build(BuildContext context) {
     SizeConfig().init(context);
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: CustomAppBar(

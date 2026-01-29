@@ -21,7 +21,8 @@ class Routes {
         name: 'home',
         path: home,
         builder: (BuildContext context, GoRouterState state) {
-          return const HomePage();
+          final int index = state.extra as int? ?? 0;
+          return HomePage(index: index);
         },
       ),
       GoRoute(

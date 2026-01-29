@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1021520929741",
+    "project_id": "cape-2534d",
+    "storage_bucket": "cape-2534d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1021520929741:android:24a297334e7b46fa009a84",
+        "android_client_info": {
+          "package_name": "com.pierre.capsecure"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtgyTgmRw8Jk-DKG35BRwDXeEti7yemjQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
