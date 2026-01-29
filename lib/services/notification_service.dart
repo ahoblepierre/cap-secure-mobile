@@ -27,10 +27,11 @@ class NotificationService {
     await _plugin.initialize(
       settings: settings,
       onDidReceiveNotificationResponse: (response) {
-        final payload = response.payload;
-        if (payload != null) {
-          _router.go(payload);
-        }
+        // final payload = response.payload;
+        // if (payload != null && payload.isNotEmpty) {
+        //   _router.pushNamed("home", extra: 2);
+        // }
+        _router.pushNamed("home", extra: 2);
       },
     );
 
@@ -77,11 +78,10 @@ class NotificationService {
 
     /// CLICK quand app était en background
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      // final route = message.data['route'];
-      // if (route != null) {
-      //   final f = _router.pushNamed("home", extra: 2);
-      //   log(f.toString());
-      // }
+      final route = message.data['route'];
+      if (route != null) {
+        _router.pushNamed("home", extra: 2);
+      }
     });
   }
 

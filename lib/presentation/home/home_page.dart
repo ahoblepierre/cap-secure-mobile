@@ -5,7 +5,6 @@ import 'package:cap_secure_mobile/presentation/profil/profile_page.dart';
 import 'package:cap_secure_mobile/presentation/scanner/scanner_page.dart';
 import 'package:cap_secure_mobile/presentation/timetable/timetable_page.dart';
 import 'package:cap_secure_mobile/routes/routes.dart';
-import 'package:cap_secure_mobile/services/notification_service.dart';
 import 'package:cap_secure_mobile/widgets/custom_app_bar.dart';
 import 'package:cap_secure_mobile/widgets/custom_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
@@ -95,11 +94,6 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _selectedIndex = widget.index ?? 0;
-    _getToken();
-  }
-
-  Future<void> _getToken() async {
-    await NotificationService.instance.getToken();
   }
 
   @override
