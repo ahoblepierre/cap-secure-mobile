@@ -1,4 +1,4 @@
-package com.example.cap_secure_mobile
+package com.pierre.capsecure
 
 import io.flutter.embedding.android.FlutterActivity
 
