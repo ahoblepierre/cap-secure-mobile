@@ -8,9 +8,13 @@ abstract class ShiftState extends Equatable {
   List<Object> get props => [];
 }
 
-class ShiftInitial extends ShiftState {}
+class ShiftInitial extends ShiftState {
+  const ShiftInitial();
+}
 
-class ShiftLoading extends ShiftState {}
+class ShiftLoading extends ShiftState {
+  const ShiftLoading();
+}
 
 class ShiftLoaded extends ShiftState {
   final List<Shift> shifts;
@@ -21,10 +25,14 @@ class ShiftLoaded extends ShiftState {
   List<Object> get props => [shifts];
 }
 
+class ShiftEmpty extends ShiftState {
+  const ShiftEmpty();
+}
+
 class ShiftError extends ShiftState {
   final String message;
 
-  const ShiftError(this.message);
+  const ShiftError({required this.message});
 
   @override
   List<Object> get props => [message];

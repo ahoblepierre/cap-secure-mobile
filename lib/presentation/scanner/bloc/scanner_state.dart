@@ -7,7 +7,9 @@ abstract class ScannerState extends Equatable {
   List<Object> get props => [];
 }
 
-class ScannerInitial extends ScannerState {}
+class ScannerInitial extends ScannerState {
+  const ScannerInitial();
+}
 
 class ScannerScanning extends ScannerState {
   final bool isFlashOn;
@@ -31,6 +33,30 @@ class ScannerError extends ScannerState {
   final String message;
 
   const ScannerError(this.message);
+
+  @override
+  List<Object> get props => [message];
+}
+
+// Nouveaux states pour le pointage
+class AttendanceSubmitting extends ScannerState {
+  const AttendanceSubmitting();
+}
+
+class AttendanceSubmitted extends ScannerState {
+  final String message;
+  final dynamic data;
+
+  const AttendanceSubmitted({required this.message, this.data});
+
+  @override
+  List<Object> get props => [message];
+}
+
+class AttendanceError extends ScannerState {
+  final String message;
+
+  const AttendanceError(this.message);
 
   @override
   List<Object> get props => [message];

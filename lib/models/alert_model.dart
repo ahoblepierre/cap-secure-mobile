@@ -1,9 +1,32 @@
-class AlertModel {
+import 'package:equatable/equatable.dart';
+
+class AlertModel extends Equatable {
   final int id;
   final String type;
   final String message;
 
-  AlertModel({required this.id, required this.type, required this.message});
+  const AlertModel({
+    required this.id,
+    required this.type,
+    required this.message,
+  });
+
+  // Créer AlertModel depuis JSON
+  factory AlertModel.fromJson(Map<String, dynamic> json) {
+    return AlertModel(
+      id: json['id'] as int,
+      type: json['type'] as String,
+      message: json['message'] as String,
+    );
+  }
+
+  // Convertir AlertModel en JSON
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'type': type, 'message': message};
+  }
+
+  @override
+  List<Object> get props => [id, type, message];
 }
 
 final List<AlertModel> mockAlerts = [

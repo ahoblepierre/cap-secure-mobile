@@ -1,8 +1,17 @@
+import 'dart:developer';
+
+import 'package:cap_secure_mobile/config/app_config.dart';
 import 'package:cap_secure_mobile/config/app_style.dart';
-import 'package:cap_secure_mobile/models/agent.dart';
+import 'package:cap_secure_mobile/models/login_response_model.dart';
 import 'package:cap_secure_mobile/models/alert_model.dart';
+import 'package:cap_secure_mobile/presentation/alert/bloc/alert_bloc.dart';
+import 'package:cap_secure_mobile/presentation/alert/bloc/alert_event.dart';
+import 'package:cap_secure_mobile/presentation/alert/bloc/alert_state.dart';
+import 'package:cap_secure_mobile/repository/alert_repository.dart';
+import 'package:cap_secure_mobile/widgets/custom_dialog.dart';
 import 'package:cap_secure_mobile/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -16,6 +25,10 @@ class _ProfilePageState extends State<ProfilePage>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   AlertModel? _selectedAlert;
+  late AgentModel _agent;
+  bool _isLoading = true;
+  String? _errorMessage;
+  late AlertBloc _alertBloc;
 
   @override
   void initState() {
@@ -27,12 +40,52 @@ class _ProfilePageState extends State<ProfilePage>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
-    _animationController.forward();
+
+    // Initialiser le AlertBloc
+    _alertBloc = AlertBloc(alertRepository: AlertRepository());
+    // Charger les alertes
+    _alertBloc.add(const FetchAlerts());
+
+    // Charger les données de l'agent depuis GetStorage
+    _loadAgentData();
+  }
+
+  Future<void> _loadAgentData() async {
+    try {
+      final agentData = box.read('agent');
+
+      log('Agent data from storage: $agentData');
+
+      if (agentData != null) {
+        // Si c'est un Map (depuis JSON), créer un AgentModel
+        if (agentData is Map<String, dynamic>) {
+          _agent = AgentModel.fromJson(agentData);
+        } else if (agentData is AgentModel) {
+          _agent = agentData;
+        }
+
+        setState(() {
+          _isLoading = false;
+        });
+        _animationController.forward();
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Aucune donnée utilisateur trouvée';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Erreur: ${e.toString()}';
+      });
+    }
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _alertBloc.close();
     super.dispose();
   }
 
@@ -66,99 +119,214 @@ class _ProfilePageState extends State<ProfilePage>
     showDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(0),
-              ),
-              title: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Choisir votre alerte",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.normal,
-                      color: kGrey,
+        return BlocProvider.value(
+          value: _alertBloc,
+          child: BlocListener<AlertBloc, AlertState>(
+            listenWhen: (previous, current) =>
+                current is AlertSent || current is AlertSendError,
+            listener: (context, state) {
+              if (state is AlertSent) {
+                Navigator.of(context).pop(); // Fermer le dialog
+                CustomDialog.showSuccessDialog(
+                  context,
+                  title: 'Succès',
+                  message: state.message,
+                  buttonText: 'OK',
+                );
+              } else if (state is AlertSendError) {
+                CustomDialog.showErrorDialog(
+                  context,
+                  title: 'Erreur',
+                  message: state.message,
+                  buttonText: 'Réessayer',
+                );
+              }
+            },
+            child: StatefulBuilder(
+              builder: (context, setState) {
+                return AlertDialog(
+                  insetPadding: EdgeInsets.symmetric(horizontal: 10.0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(0),
+                  ),
+                  title: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<AlertModel>(
-                    decoration: InputDecoration(
-                      labelText: 'Type d\'alerte',
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(color: kGrey),
-                      ),
-                    ),
-                    initialValue: _selectedAlert,
-                    items: mockAlerts.map((alert) {
-                      return DropdownMenuItem<AlertModel>(
-                        value: alert,
-                        child: Text(alert.type),
-                      );
-                    }).toList(),
-                    onChanged: (AlertModel? newValue) {
-                      setState(() {
-                        _selectedAlert = newValue;
-                      });
-                    },
-                  ),
-                  if (_selectedAlert != null) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      'Message: ${_selectedAlert!.message}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text(
-                    'Annuler',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                ),
-                if (_selectedAlert != null)
-                  ElevatedButton(
-                    onPressed: () {
-                      // Logique pour envoyer l'alerte
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Alerte "${_selectedAlert!.type}" envoyée !',
+                  content: BlocBuilder<AlertBloc, AlertState>(
+                    builder: (context, state) {
+                      if (state is AlertLoading) {
+                        return SizedBox(
+                          height: 200,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const CircularProgressIndicator(),
+                                const SizedBox(height: 16),
+                                const Text('Chargement des alertes...'),
+                              ],
+                            ),
                           ),
+                        );
+                      }
+
+                      if (state is AlertEmpty) {
+                        return SizedBox(
+                          height: 150,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  size: 48,
+                                  color: Colors.orange[600],
+                                ),
+                                const SizedBox(height: 12),
+                                const Text('Aucune alerte disponible'),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (state is AlertError) {
+                        return SizedBox(
+                          height: 150,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.error_outline,
+                                  size: 48,
+                                  color: Colors.red,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  state.message,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      // Récupérer les alertes du state AlertLoaded
+                      List<AlertModel> alerts = [];
+                      if (state is AlertLoaded) {
+                        alerts = state.alerts;
+                      }
+
+                      return SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Choisir votre alerte",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                                color: kGrey,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            DropdownButtonFormField<AlertModel>(
+                              decoration: InputDecoration(
+                                labelText: 'Type d\'alerte',
+                                border: OutlineInputBorder(
+                                  borderSide: BorderSide(color: kGrey),
+                                ),
+                              ),
+                              initialValue: _selectedAlert,
+                              items: alerts.map((alert) {
+                                return DropdownMenuItem<AlertModel>(
+                                  value: alert,
+                                  child: Text(alert.type),
+                                );
+                              }).toList(),
+                              onChanged: (AlertModel? newValue) {
+                                setState(() {
+                                  _selectedAlert = newValue;
+                                });
+                              },
+                            ),
+                            if (_selectedAlert != null) ...[
+                              const SizedBox(height: 16),
+                              Text(
+                                'Message: ${_selectedAlert!.message}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       );
-                      Navigator.of(context).pop();
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kBleue,
-                      foregroundColor: Colors.white,
-                      shape: ContinuousRectangleBorder(),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text(
+                        'Annuler',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                    child: const Text('Envoyer'),
-                  ),
-              ],
-            );
-          },
+                    if (_selectedAlert != null)
+                      BlocBuilder<AlertBloc, AlertState>(
+                        builder: (context, state) {
+                          final isSending = state is AlertSending;
+
+                          return ElevatedButton(
+                            onPressed: isSending
+                                ? null
+                                : () {
+                                    // Envoyer l'alerte via le BLoC
+                                    _alertBloc.add(
+                                      SendAlert(alertId: _selectedAlert!.id),
+                                    );
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kBleue,
+                              foregroundColor: Colors.white,
+                              shape: const ContinuousRectangleBorder(),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                            ),
+                            child: isSending
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : const Text('Envoyer'),
+                          );
+                        },
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
         );
       },
     );
@@ -166,7 +334,33 @@ class _ProfilePageState extends State<ProfilePage>
 
   @override
   Widget build(BuildContext context) {
-    final agent = Agent.mockAgent;
+    // Afficher un loader si les données se chargent
+    if (_isLoading) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            const Text('Chargement des données...'),
+          ],
+        ),
+      );
+    }
+
+    // Afficher une erreur si nécessaire
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(_errorMessage!),
+          ],
+        ),
+      );
+    }
 
     return SizedBox(
       child: FadeTransition(
@@ -181,10 +375,10 @@ class _ProfilePageState extends State<ProfilePage>
                 CircleAvatar(
                   radius: 60,
                   backgroundColor: Colors.white,
-                  child: agent.imageUrl != null
+                  child: _agent.imageUrl != null && _agent.imageUrl!.isNotEmpty
                       ? ClipOval(
                           child: Image.network(
-                            agent.imageUrl!,
+                            _agent.imageUrl!,
                             width: 120,
                             height: 120,
                             fit: BoxFit.cover,
@@ -196,9 +390,9 @@ class _ProfilePageState extends State<ProfilePage>
                 ),
                 const SizedBox(height: 16),
 
-                // Nom
+                // Nom et Prénom
                 Text(
-                  agent.fullName,
+                  '${_agent.firstName} ${_agent.name}',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
@@ -207,10 +401,10 @@ class _ProfilePageState extends State<ProfilePage>
                 ),
                 const SizedBox(height: 8),
 
-                // Matricule
+                // Numéro d'enregistrement
                 Chip(
                   label: Text(
-                    agent.matricule,
+                    _agent.registrationNumber,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w500,
@@ -228,14 +422,21 @@ class _ProfilePageState extends State<ProfilePage>
                 _buildInfoCard(
                   icon: Icons.phone,
                   title: 'Téléphone',
-                  value: agent.phone,
+                  value: _agent.phone,
                 ),
                 const SizedBox(height: 16),
 
                 _buildInfoCard(
                   icon: Icons.email,
                   title: 'Email',
-                  value: agent.email,
+                  value: _agent.email,
+                ),
+                const SizedBox(height: 16),
+
+                _buildInfoCard(
+                  icon: Icons.badge,
+                  title: 'ID Agent',
+                  value: _agent.id.toString(),
                 ),
 
                 Padding(padding: const EdgeInsets.only(top: 32.0)),
@@ -244,7 +445,7 @@ class _ProfilePageState extends State<ProfilePage>
                   labelText: 'Lancer une alerte',
                   backgroundColor: Colors.redAccent,
                   onPress: () {
-                    _showAlertDialog("Envoyé une alerte d'urgence");
+                    _showAlertDialog("Envoyer une alerte d'urgence");
                   },
                 ),
               ],

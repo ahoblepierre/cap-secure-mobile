@@ -13,6 +13,15 @@ class AgentNotification {
     required this.date,
   });
 
+  factory AgentNotification.fromJson(Map<String, dynamic> json) {
+    return AgentNotification(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      date: DateTime.parse(json['date'] as String),
+    );
+  }
+
   // Formater la date de manière lisible
   String get formattedDate {
     final now = DateTime.now();
