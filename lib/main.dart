@@ -1,9 +1,11 @@
 import 'package:cap_secure_mobile/config/app_style.dart';
 import 'package:cap_secure_mobile/firebase_options.dart';
 import 'package:cap_secure_mobile/presentation/login/bloc/login_bloc.dart';
+import 'package:cap_secure_mobile/presentation/notification/bloc/notification_bloc.dart';
 import 'package:cap_secure_mobile/presentation/scanner/bloc/scanner_bloc.dart';
 import 'package:cap_secure_mobile/presentation/splach_screen/bloc/splash_bloc.dart';
 import 'package:cap_secure_mobile/presentation/timetable/bloc/shift_bloc.dart';
+import 'package:cap_secure_mobile/repository/notification_repository.dart';
 import 'package:cap_secure_mobile/repository/shift_repository.dart';
 import 'package:cap_secure_mobile/routes/routes.dart';
 import 'package:cap_secure_mobile/services/notification_service.dart';
@@ -57,6 +59,11 @@ class MyApp extends StatelessWidget {
         BlocProvider<LoginBloc>(create: (context) => LoginBloc()),
         BlocProvider<ShiftBloc>(
           create: (context) => ShiftBloc(shiftRepository: ShiftRepository()),
+        ),
+        BlocProvider(
+          create: (context) => NotificationBloc(
+            notificationRepository: NotificationRepository(),
+          ),
         ),
       ],
       child: MaterialApp.router(
