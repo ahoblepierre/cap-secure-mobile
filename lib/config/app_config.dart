@@ -10,7 +10,7 @@ final box = GetStorage();
 
 // const BASE_URL = "http://127.0.0.1:8000/api/agent/";
 
-const BASE_URL = "http://192.168.1.34:8000/api/agent/";
+const BASE_URL = "http://192.168.1.32:8000/api/agent/";
 
 enum Statut { SUCCESS, ERROR, WARNING }
 

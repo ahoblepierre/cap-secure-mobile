@@ -196,7 +196,12 @@ class _TimetablePageState extends State<TimetablePage> {
                   },
                 );
               } else if (state is ShiftEmpty) {
-                return const EmptyShiftState();
+                return EmptyShiftState(
+                  onPressed: () {
+                    // Déclencher un rafraîchissement
+                    context.read<ShiftBloc>().add(LoadShifts());
+                  },
+                );
               } else if (state is ShiftError) {
                 return Center(child: Text('Erreur: ${state.message}'));
               }

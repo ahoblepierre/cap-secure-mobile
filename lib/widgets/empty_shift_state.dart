@@ -1,7 +1,10 @@
+import 'package:cap_secure_mobile/config/app_style.dart';
 import 'package:flutter/material.dart';
 
 class EmptyShiftState extends StatelessWidget {
-  const EmptyShiftState({super.key});
+  const EmptyShiftState({super.key, this.onPressed});
+
+  final void Function()? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -13,13 +16,13 @@ class EmptyShiftState extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.1),
+              color: kBleue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(
               Icons.calendar_today_outlined,
               size: 80,
-              color: Colors.blue.withValues(alpha: 0.6),
+              color: kBleue.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: 32),
@@ -53,18 +56,15 @@ class EmptyShiftState extends StatelessWidget {
 
           // Bouton de rafraîchissement optionnel
           ElevatedButton.icon(
-            onPressed: () {
-              // Déclencher un rafraîchissement
-              // context.read<ShiftBloc>().add(LoadShifts());
-            },
-            icon: const Icon(Icons.refresh),
-            label: const Text('Rafraîchir'),
+            onPressed: onPressed,
+            icon: const Icon(Icons.refresh, size: 20),
+            label: const Text('Rafraîchir', style: TextStyle(fontSize: 16)),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
+              backgroundColor: kBleue,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(0),
               ),
             ),
           ),
